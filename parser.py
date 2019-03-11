@@ -28,6 +28,11 @@ def parse_args(config_file='configs.json'):
     		help='number of iterative weight updates, DEFAULT=' + str(NUM_ITER))
     parser.add_argument('--NUM_RESTARTS', type=int, default= None,\
     		help='number of restarts, DEFAULT dependent on dataset.')
+
+    parser.add_argument('-GAUSSIAN_PYR', action='store_true', default=False,\
+            help='apply gaussian pyramid')
+    parser.add_argument('--N_LEVELS', type=int, default=1,\
+            help='how big is the pyramid')
     
     args = parser.parse_args()
 

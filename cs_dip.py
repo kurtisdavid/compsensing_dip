@@ -17,7 +17,7 @@ BATCH_SIZE = 1
 EXIT_WINDOW = 51
 loss_re, recons_re = utils.init_output_arrays(args)
 
-def dip_estimator(args):
+def dip_estimator(args, custom=None):
     def estimator(A_val, y_batch_val, args):
 
         y = torch.FloatTensor(y_batch_val).type(dtype) # init measurements y
@@ -44,7 +44,10 @@ def dip_estimator(args):
 
                 # calculate measurement loss || y - A*G(z) ||
                 G = net(z)
-                AG = torch.matmul(G.view(BATCH_SIZE,-1),A) # A*G(z)
+                if custom is None:
+                    AG = torch.matmul(G.view(BATCH_SIZE,-1),A) # A*G(z)
+                else:
+                    AG = custom(G.view(BATCH_SIZE,-1))
                 y_loss = torch.mean(torch.sum(se(AG,y),dim=1))
 
                 # calculate total variation loss 

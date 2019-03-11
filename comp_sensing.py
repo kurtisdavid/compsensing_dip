@@ -37,7 +37,7 @@ for num_meas in NUM_MEASUREMENTS_LIST:
                 continue
             NEW_RECONS = True
 
-            if alg == 'csdip':
+            if alg == 'csdip' and not args.GAUSSIAN_PYR:
                 estimator = cs_dip.dip_estimator(args)
             elif alg == 'dct':
                 estimator = baselines.lasso_dct_estimator(args)
