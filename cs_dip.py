@@ -47,20 +47,20 @@ def dip_estimator(args, custom=None):
                 if custom is None:
                     AG = torch.matmul(G.view(BATCH_SIZE,-1),A) # A*G(z)
                 else:
-                    AG = custom(G.view(BATCH_SIZE,-1))
+                    AG = custom(G).view(-1,1)
                 y_loss = torch.mean(torch.sum(se(AG,y),dim=1))
-
                 # calculate total variation loss 
                 tv_loss = (torch.sum(torch.abs(G[:,:,:,:-1] - G[:,:,:,1:]))\
                             + torch.sum(torch.abs(G[:,:,:-1,:] - G[:,:,1:,:]))) 
 
                 # calculate learned regularization loss
-                layers = net.parameters()
-                layer_means = torch.cat([layer.mean().view(1) for layer in layers])
-                lr_loss = torch.matmul(layer_means-mu,torch.matmul(sig_inv,layer_means-mu))
+#                layers = net.parameters()
+#                layer_means = torch.cat([layer.mean().view(1) for layer in layers])
+#                lr_loss = torch.matmul(layer_means-mu,torch.matmul(sig_inv,layer_means-mu))
                 
-                total_loss = y_loss + lrc*lr_loss + tvc*tv_loss # total loss for iteration i
-                 
+#                total_loss = y_loss + lrc*lr_loss + tvc*tv_loss # total loss for iteration i
+#                total_loss = y_loss + tvc*tv_loss               
+                total_loss = y_loss 
                 # stopping condition to account for optimizer convergence
                 if i >= args.NUM_ITER - EXIT_WINDOW: 
                     recons_iter.append(G.data.cpu().numpy())
@@ -70,13 +70,13 @@ def dip_estimator(args, custom=None):
 
                 total_loss.backward() # backprop
                 optim.step()
-
+        
             recons_re[j] = recons_iter[idx_iter]       
             loss_re[j] = y_loss.data.cpu().numpy()
 
         idx_re = np.argmin(loss_re,axis=0)
         x_hat = recons_re[idx_re]
-
+        print(loss_re)         
         return x_hat
 
     return estimator

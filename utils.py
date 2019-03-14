@@ -134,11 +134,15 @@ def get_constants(args, dtype):
     MU_PATH = os.path.join(args.LR_FOLDER,MU_FN)
     SIG_FN = "sig_{0}.npy".format(args.NUM_MEASUREMENTS)
     SIG_PATH = os.path.join(args.LR_FOLDER,SIG_FN)
-    mu_ = np.load(MU_PATH)
-    sig_ = np.load(SIG_PATH)
+    try:
+        mu_ = np.load(MU_PATH)
+        sig_ = np.load(SIG_PATH)
+        mu = torch.FloatTensor(mu_).type(dtype)
+        sig_inv = torch.FloatTensor(np.linalg.inv(sig_)).type(dtype)
+    except:
+        mu = None
+        sig_inv = None
 
-    mu = torch.FloatTensor(mu_).type(dtype)
-    sig_inv = torch.FloatTensor(np.linalg.inv(sig_)).type(dtype)
     try:
         tvc = lambdas_tv[args.DATASET]
     except AttributeError:
