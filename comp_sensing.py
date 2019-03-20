@@ -28,7 +28,7 @@ for num_meas in NUM_MEASUREMENTS_LIST:
     A = baselines.get_A(args.IMG_SIZE*args.IMG_SIZE*args.NUM_CHANNELS, args.NUM_MEASUREMENTS)
 
     for c, (batch, _, im_path) in enumerate(dataloader):
-
+        print(batch.shape)
         x = batch.view(1,-1).cpu().numpy() # define image
         y = x @ A
         for alg in ALG_LIST:
@@ -43,7 +43,7 @@ for num_meas in NUM_MEASUREMENTS_LIST:
             elif alg == 'csdip' and args.GAUSSIAN_PYR:
                 module = PyrDown(channels = args.NUM_CHANNELS, n_levels = args.N_LEVELS)
                 estimator = cs_dip.dip_estimator(args,module)
-                y = module(torch.from_numpy(np.reshape(x,(1,1,28,28))).cuda()).view(-1,1).cpu()
+                y = module(torch.from_numpy(np.reshape(x,(1,args.NUM_CHANNELS,args.IMG_SIZE,args.IMG_SIZE))).cuda()).view(-1,1).cpu()
             elif alg == 'dct':
                 estimator = baselines.lasso_dct_estimator(args)
             elif alg == 'wavelet':

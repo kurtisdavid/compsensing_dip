@@ -59,7 +59,7 @@ def dip_estimator(args, custom=None):
 #                lr_loss = torch.matmul(layer_means-mu,torch.matmul(sig_inv,layer_means-mu))
                 
 #                total_loss = y_loss + lrc*lr_loss + tvc*tv_loss # total loss for iteration i
-#                total_loss = y_loss + tvc*tv_loss               
+                total_loss = y_loss + tvc*tv_loss               
                 total_loss = y_loss 
                 # stopping condition to account for optimizer convergence
                 if i >= args.NUM_ITER - EXIT_WINDOW: 

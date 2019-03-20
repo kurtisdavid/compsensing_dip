@@ -43,6 +43,42 @@ class DCGAN_XRAY(nn.Module):
        
         return x
 
+class DCGAN_EULER(nn.Module):
+
+    def __init__(self, nz, ngf=64, output_size=(256,256), nc=3, num_measurements=1000):
+        super(DCGAN_XRAY, self).__init__()
+        self.nc = nc
+        self.output_size = output_size
+
+        self.conv1 = nn.ConvTranspose2d(nz, ngf, 4, 1, 0, bias=False)
+        self.bn1 = nn.BatchNorm2d(ngf)
+        self.conv2 = nn.ConvTranspose2d(ngf, ngf, 6, 2, 2, bias=False)
+        self.bn2 = nn.BatchNorm2d(ngf)
+        self.conv3 = nn.ConvTranspose2d(ngf, ngf, 6, 2, 2, bias=False)
+        self.bn3 = nn.BatchNorm2d(ngf)
+        self.conv4 = nn.ConvTranspose2d(ngf, ngf, 6, 2, 2, bias=False)
+        self.bn4 = nn.BatchNorm2d(ngf)
+        self.conv5 = nn.ConvTranspose2d(ngf, ngf, 6, 2, 2, bias=False)
+        self.bn5 = nn.BatchNorm2d(ngf)
+        self.conv6 = nn.ConvTranspose2d(ngf, ngf, 6, 2, 2, bias=False)
+        self.bn6 = nn.BatchNorm2d(ngf)
+        self.conv7 = nn.ConvTranspose2d(ngf, nc, 4, 2, 1, bias=False) #output is image
+    
+    def forward(self, z):
+        input_size = z.size()
+        x = F.relu(self.bn1(self.conv1(z)))
+        x = F.relu(self.bn2(self.conv2(x)))
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = F.relu(self.bn4(self.conv4(x)))
+        x = F.relu(self.bn5(self.conv5(x)))
+        x = F.relu(self.bn6(self.conv6(x)))
+        x = torch.tanh(self.conv7(x,output_size=(-1,self.nc,self.output_size[0],self.output_size[1])))
+       
+        return x
+
+
+
+
 class DCGAN_MNIST(nn.Module):
     def __init__(self, nz, ngf=64, output_size=28, nc=1, num_measurements=10):
         super(DCGAN_MNIST, self).__init__()
@@ -119,6 +155,9 @@ def init_dcgan(args):
     elif args.DATASET == 'retino':
         net = DCGAN_RETINO(args.Z_DIM, NGF, args.IMG_SIZE,\
             args.NUM_CHANNELS, args.NUM_MEASUREMENTS)
+    else:
+        net = DCGAN_XRAY(args.Z_DIM, NGF, args.IMG_SIZE,\
+            args.NUM_CHANNELS, args.NUM_MEASUREMENTS)
     return net
 
 def init_output_arrays(args):
@@ -127,8 +166,8 @@ def init_output_arrays(args):
                     args.IMG_SIZE, args.IMG_SIZE))
     return loss_re, recons_re
 
-lambdas_tv = {'mnist': 1e-2, 'xray': 5e-2, 'retino': 2e-2}
-lambdas_lr = {'mnist': 0, 'xray': 100, 'retino': 1000}
+lambdas_tv = {'mnist': 1e-2, 'xray': 5e-2, 'retino': 2e-2, 'face': 1e-1}
+lambdas_lr = {'mnist': 0, 'xray': 100, 'retino': 1000, 'face':10}
 def get_constants(args, dtype):
     MU_FN = 'mu_{0}.npy'.format(args.NUM_MEASUREMENTS)
     MU_PATH = os.path.join(args.LR_FOLDER,MU_FN)
@@ -181,7 +220,7 @@ def define_compose(NC, IMG_SIZE): # define compose based on NUM_CHANNELS, IMG_SI
             transforms.Resize((IMG_SIZE,IMG_SIZE)),
             transforms.Grayscale(),
             transforms.ToTensor(),
-            transforms.Normalize((.5,.5,.5),(.5,.5,.5))
+            transforms.Normalize((.5,),(.5,))
         ])
     elif NC == 3: #rgb
         compose = transforms.Compose([
@@ -273,7 +312,7 @@ def path_leaf(path):
 
 def get_data(args):
     compose = define_compose(args.NUM_CHANNELS, args.IMG_SIZE)
-
+    print(compose)
     if args.DEMO == 'True':
         image_direc = 'data/{0}_demo/'.format(args.DATASET)
     else:
