@@ -21,14 +21,20 @@ loss_re, recons_re = utils.init_output_arrays(args)
 def vid_dip_estimator(args, custom=None):
     def z_estimator(net, z_, A_val, y_batch_val, args, z_logger):
         # make it trainable
-        z = Variable(z_.copy(), requires_grad=True)
-        z_param = torch.nn.Parameter(z)
+        z = Variable(z_, requires_grad=True)
+        z_param = torch.nn.Parameter(z).cuda()
         optim = torch.optim.SGD([z_param], lr=0.01, momentum=0.9)
         if CUDA:
             net.cuda()
         z_iter = []
         loss_iter = [] 
-        for i in range(args.z_NUM_ITER):
+
+        y = torch.FloatTensor(y_batch_val).type(dtype) # init measurements y
+        A = torch.FloatTensor(A_val).type(dtype)       # init measurement matrix A
+
+        mu, sig_inv, tvc, lrc = utils.get_constants(args, dtype)
+
+        for i in range(1000):
             optim.zero_grad()
             G = net(z)
             if custom is None:
@@ -42,7 +48,8 @@ def vid_dip_estimator(args, custom=None):
 
             total_loss = y_loss + tvc*tv_loss               
             # stopping condition to account for optimizer convergence
-            if i >= args.NUM_ITER - EXIT_WINDOW: 
+#            if i >= args.NUM_ITER - EXIT_WINDOW:
+            if True: 
                 z_iter.append(z.data.cpu().numpy())
                 loss_iter.append(total_loss.data.cpu().numpy())
 
@@ -50,7 +57,7 @@ def vid_dip_estimator(args, custom=None):
             optim.step() # only update the latent vector
         z_logger.append(loss_iter)
         idx_re = np.argmin(loss_iter,axis=0)
-        z_hat = recons_iter[idx_re]
+        z_hat = z_iter[idx_re]
 
         return z_hat
     def gan_estimator(A_val, y_batch_val, args, gan_logger, net=None, z=None):
@@ -65,8 +72,7 @@ def vid_dip_estimator(args, custom=None):
             z = torch.zeros(BATCH_SIZE*args.Z_DIM).type(dtype).view(BATCH_SIZE,args.Z_DIM,1,1)
             z.data.normal_().type(dtype) #init random input seed
         else:
-            z = z.copy()
-            z.requires_grad = False
+            z = torch.from_numpy(z).type(dtype)
         
         if CUDA:
             net.cuda() # cast network to GPU if available

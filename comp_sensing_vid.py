@@ -49,7 +49,7 @@ for num_meas in NUM_MEASUREMENTS_LIST:
             if alg == 'csdip' and not args.GAUSSIAN_PYR:
                 estimator = cs_dip.dip_estimator(args)
             elif alg == 'csdip' and args.GAUSSIAN_PYR:
-                module = PyrDown(channels = args.NUM_CHANNELS, n_levels = args.N_LEVELS])
+                module = PyrDown(channels = args.NUM_CHANNELS, n_levels = args.N_LEVELS)
                 z_estimator, gan_estimator  = cs_dip.vid_dip_estimator(args,module)
                 y = module(torch.from_numpy(np.reshape(x,(1,args.NUM_CHANNELS,args.IMG_SIZE,args.IMG_SIZE))).cuda()).view(-1,1).cpu()
             elif alg == 'dct':
@@ -70,14 +70,14 @@ for num_meas in NUM_MEASUREMENTS_LIST:
                 z = z_estimator(net, z, A, y, args, z_logger)
             net, z, x_hat = gan_estimator(A, y, args, gan_logger, net=net, z=z)
             # z shouldn't change if net is not None, since that is not trainable in gan_estimator
-            z_s.append(z.data.cpu())
+            z_s.append(z.data.cpu().numpy())
             x_hats.append(x_hat)          
                      
             # utils.save_reconstruction(x_hat, args, im_path)
     np.save('gan_losses',gan_logger)
     np.save('z_losses',z_logger)
     np.save('noisy',noisy)
-    np.save('z_s', z)
+    np.save('z_s', z_s)
     np.save('x_hats', x_hats)
 
 
